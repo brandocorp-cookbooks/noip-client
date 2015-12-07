@@ -1,0 +1,33 @@
+sudo: required
+
+addons:
+  apt:
+    sources:
+      - chef-stable-precise
+    packages:
+      - chefdk
+
+# Don't `bundle install`
+install: echo "skip bundler"
+
+branches:
+  only:
+    - master
+
+services:
+  - docker
+
+env:
+  global:
+    - RUBYOPT="-W0"
+
+before_script:
+  - eval "$(/opt/chefdk/bin/chef shell-init bash)"
+  # We have to install chef-sugar for ChefSpec
+  - /opt/chefdk/embedded/bin/chef gem install chef-sugar
+  # Ensure kitchen-docker is available for testing
+  - /opt/chefdk/embedded/bin/chef gem install kitchen-docker
+script:
+  - /opt/chefdk/embedded/bin/foodcritic . --exclude spec
+  - /opt/chefdk/embedded/bin/rspec spec
+  - KITCHEN_LOCAL_YAML=.kitchen.docker.yml /opt/chefdk/embedded/bin/kitchen test
